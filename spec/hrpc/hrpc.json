@@ -1,0 +1,140 @@
+{
+  "version": 5,
+  "schema": [
+    {
+      "id": 0,
+      "name": "@pearschool-mini/rooms",
+      "request": {
+        "name": "@pearschool-mini/rooms",
+        "send": true
+      },
+      "version": 1
+    },
+    {
+      "id": 1,
+      "name": "@pearschool-mini/add-room",
+      "request": {
+        "name": "string",
+        "send": true
+      },
+      "version": 1
+    },
+    {
+      "id": 2,
+      "name": "@pearschool-mini/join-room",
+      "request": {
+        "name": "string",
+        "send": true
+      },
+      "version": 1
+    },
+    {
+      "id": 3,
+      "name": "@pearschool-mini/messages",
+      "request": {
+        "name": "@pearschool-mini/get-messages",
+        "send": true
+      },
+      "version": 1
+    },
+    {
+      "id": 4,
+      "name": "@pearschool-mini/add-message",
+      "request": {
+        "name": "@pearschool-mini/add-message",
+        "send": true
+      },
+      "version": 1
+    },
+    {
+      "id": 5,
+      "name": "@pearschool-mini/drives",
+      "request": {
+        "name": "@pearschool-mini/drives",
+        "send": true
+      },
+      "version": 1
+    },
+    {
+      "id": 6,
+      "name": "@pearschool-mini/add-file",
+      "request": {
+        "name": "@pearschool-mini/file",
+        "send": true
+      },
+      "version": 1
+    },
+    {
+      "id": 7,
+      "name": "@pearschool-mini/tasks",
+      "request": {
+        "name": "@pearschool-mini/tasks",
+        "send": true
+      },
+      "version": 2
+    },
+    {
+      "id": 8,
+      "name": "@pearschool-mini/add-task",
+      "request": {
+        "name": "@pearschool-mini/task",
+        "send": true
+      },
+      "version": 2
+    },
+    {
+      "id": 9,
+      "name": "@pearschool-mini/delete-task",
+      "request": {
+        "name": "@pearschool-mini/delete-task",
+        "send": true
+      },
+      "version": 3
+    },
+    {
+      "id": 10,
+      "name": "@pearschool-mini/courses",
+      "request": {
+        "name": "@pearschool-mini/courses",
+        "send": true
+      },
+      "version": 4
+    },
+    {
+      "id": 11,
+      "name": "@pearschool-mini/add-course",
+      "request": {
+        "name": "@pearschool-mini/course",
+        "send": true
+      },
+      "version": 4
+    },
+    {
+      "id": 12,
+      "name": "@pearschool-mini/delete-course",
+      "request": {
+        "name": "@pearschool-mini/delete-course",
+        "send": true
+      },
+      "version": 4
+    },
+    {
+      "id": 13,
+      "name": "@pearschool-mini/videos",
+      "request": {
+        "name": "@pearschool-mini/videos",
+        "send": true
+      },
+      "version": 5
+    },
+    {
+      "id": 14,
+      "name": "@pearschool-mini/add-video",
+      "request": {
+        "name": "string",
+        "send": true
+      },
+      "version": 5
+    }
+  ]
+}

@@ -1,0 +1,385 @@
+{
+  "version": 6,
+  "schema": [
+    {
+      "name": "writer",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": -1,
+      "fields": [
+        {
+          "name": "key",
+          "required": true,
+          "type": "buffer",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "invite",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": -1,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "buffer",
+          "version": 1
+        },
+        {
+          "name": "invite",
+          "required": true,
+          "type": "buffer",
+          "version": 1
+        },
+        {
+          "name": "publicKey",
+          "required": true,
+          "type": "buffer",
+          "version": 1
+        },
+        {
+          "name": "expires",
+          "required": true,
+          "type": "int",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "room",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 3,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "name",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "invite",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "info",
+          "type": "json",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "namespace": "pearschool-mini",
+      "array": true,
+      "type": "@pearschool-mini/room"
+    },
+    {
+      "name": "message",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 2,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "text",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "info",
+          "type": "json",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "messages",
+      "namespace": "pearschool-mini",
+      "array": true,
+      "type": "@pearschool-mini/message"
+    },
+    {
+      "name": "get-messages",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": -1,
+      "fields": [
+        {
+          "name": "messages",
+          "required": true,
+          "type": "@pearschool-mini/messages",
+          "version": 1
+        },
+        {
+          "name": "roomId",
+          "required": true,
+          "type": "string",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "add-message",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": -1,
+      "fields": [
+        {
+          "name": "text",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "roomId",
+          "required": true,
+          "type": "string",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "drive",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 1,
+      "fields": [
+        {
+          "name": "key",
+          "required": true,
+          "type": "buffer",
+          "version": 1
+        },
+        {
+          "name": "info",
+          "type": "json",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "drives",
+      "namespace": "pearschool-mini",
+      "array": true,
+      "type": "@pearschool-mini/drive"
+    },
+    {
+      "name": "file",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 2,
+      "fields": [
+        {
+          "name": "name",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "uri",
+          "required": true,
+          "type": "string",
+          "version": 1
+        },
+        {
+          "name": "info",
+          "type": "json",
+          "version": 1
+        }
+      ]
+    },
+    {
+      "name": "task",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 2,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "version": 2
+        },
+        {
+          "name": "name",
+          "required": true,
+          "type": "string",
+          "version": 2
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "version": 2
+        },
+        {
+          "name": "dueDate",
+          "type": "int",
+          "version": 2
+        },
+        {
+          "name": "status",
+          "required": true,
+          "type": "string",
+          "version": 2
+        },
+        {
+          "name": "info",
+          "type": "json",
+          "version": 2
+        }
+      ]
+    },
+    {
+      "name": "tasks",
+      "namespace": "pearschool-mini",
+      "array": true,
+      "type": "@pearschool-mini/task"
+    },
+    {
+      "name": "delete-task",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": -1,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "version": 3
+        }
+      ]
+    },
+    {
+      "name": "course",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 3,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "version": 4
+        },
+        {
+          "name": "title",
+          "required": true,
+          "type": "string",
+          "version": 4
+        },
+        {
+          "name": "instructor",
+          "required": true,
+          "type": "string",
+          "version": 4
+        },
+        {
+          "name": "room",
+          "type": "string",
+          "version": 4
+        },
+        {
+          "name": "startDate",
+          "type": "int",
+          "version": 4
+        },
+        {
+          "name": "status",
+          "required": true,
+          "type": "string",
+          "version": 4
+        },
+        {
+          "name": "info",
+          "type": "json",
+          "version": 4
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "version": 5
+        }
+      ]
+    },
+    {
+      "name": "courses",
+      "namespace": "pearschool-mini",
+      "array": true,
+      "type": "@pearschool-mini/course"
+    },
+    {
+      "name": "delete-course",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": -1,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "version": 4
+        }
+      ]
+    },
+    {
+      "name": "video",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 4,
+      "fields": [
+        {
+          "name": "id",
+          "required": true,
+          "type": "string",
+          "version": 6
+        },
+        {
+          "name": "name",
+          "required": true,
+          "type": "string",
+          "version": 6
+        },
+        {
+          "name": "type",
+          "required": true,
+          "type": "string",
+          "version": 6
+        },
+        {
+          "name": "blob",
+          "required": true,
+          "type": "json",
+          "version": 6
+        },
+        {
+          "name": "info",
+          "type": "json",
+          "version": 6
+        }
+      ]
+    },
+    {
+      "name": "videos",
+      "namespace": "pearschool-mini",
+      "array": true,
+      "type": "@pearschool-mini/video"
+    }
+  ]
+}

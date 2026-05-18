@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# macOS metadata
+.DS_Store
+._*
+
+# Editor / IDE
+.vscode/
+.idea/
+.void/
+*.swp
+*.swo
+
+# Personal Claude permission allowlist (collaborators have their own)
+.claude/settings.local.json
+
+# Generated build artifacts — re-run `npm run build`
+build/
+output.css
+
+# Local runtime corestore left in the repo by `npx blind-peer -s blind-peer`
+# (contains IDENTITY — never commit). Always run blind-peer with -s /tmp/...
+blind-peer/
+
+# Any runtime store accidentally created inside the repo
+pearschool-mini-*
+shared-drives/
+my-drive/
+
+# Logs (including the worker.log mirror)
+*.log
+worker.log
+
+# Env files / secrets
+.env
+.env.*
+!.env.example

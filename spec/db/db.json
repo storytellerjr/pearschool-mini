@@ -1,0 +1,111 @@
+{
+  "version": 4,
+  "offset": 0,
+  "schema": [
+    {
+      "name": "invites",
+      "namespace": "pearschool-mini",
+      "id": 0,
+      "type": 1,
+      "version": 1,
+      "versionField": null,
+      "indexes": [],
+      "schema": "@pearschool-mini/invite",
+      "derived": false,
+      "key": [
+        "id"
+      ],
+      "trigger": null
+    },
+    {
+      "name": "rooms",
+      "namespace": "pearschool-mini",
+      "id": 1,
+      "type": 1,
+      "version": 1,
+      "versionField": null,
+      "indexes": [],
+      "schema": "@pearschool-mini/room",
+      "derived": false,
+      "key": [
+        "id"
+      ],
+      "trigger": null
+    },
+    {
+      "name": "messages",
+      "namespace": "pearschool-mini",
+      "id": 2,
+      "type": 1,
+      "version": 1,
+      "versionField": null,
+      "indexes": [],
+      "schema": "@pearschool-mini/message",
+      "derived": false,
+      "key": [
+        "id"
+      ],
+      "trigger": null
+    },
+    {
+      "name": "drives",
+      "namespace": "pearschool-mini",
+      "id": 3,
+      "type": 1,
+      "version": 1,
+      "versionField": null,
+      "indexes": [],
+      "schema": "@pearschool-mini/drive",
+      "derived": false,
+      "key": [
+        "key"
+      ],
+      "trigger": null
+    },
+    {
+      "name": "tasks",
+      "namespace": "pearschool-mini",
+      "id": 4,
+      "type": 1,
+      "version": 2,
+      "versionField": null,
+      "indexes": [],
+      "schema": "@pearschool-mini/task",
+      "derived": false,
+      "key": [
+        "id"
+      ],
+      "trigger": null
+    },
+    {
+      "name": "courses",
+      "namespace": "pearschool-mini",
+      "id": 5,
+      "type": 1,
+      "version": 3,
+      "versionField": null,
+      "indexes": [],
+      "schema": "@pearschool-mini/course",
+      "derived": false,
+      "key": [
+        "id"
+      ],
+      "trigger": null
+    },
+    {
+      "name": "videos",
+      "namespace": "pearschool-mini",
+      "id": 6,
+      "type": 1,
+      "version": 4,
+      "versionField": null,
+      "indexes": [],
+      "schema": "@pearschool-mini/video",
+      "derived": false,
+      "key": [
+        "id"
+      ],
+      "trigger": null
+    }
+  ]
+}

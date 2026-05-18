@@ -1,0 +1,66 @@
+{
+  "version": 5,
+  "offset": 0,
+  "schema": [
+    {
+      "id": 0,
+      "name": "@pearschool-mini/add-writer",
+      "requestType": "@pearschool-mini/writer",
+      "version": 1
+    },
+    {
+      "id": 1,
+      "name": "@pearschool-mini/add-invite",
+      "requestType": "@pearschool-mini/invite",
+      "version": 1
+    },
+    {
+      "id": 2,
+      "name": "@pearschool-mini/add-room",
+      "requestType": "@pearschool-mini/room",
+      "version": 1
+    },
+    {
+      "id": 3,
+      "name": "@pearschool-mini/add-message",
+      "requestType": "@pearschool-mini/message",
+      "version": 1
+    },
+    {
+      "id": 4,
+      "name": "@pearschool-mini/add-drive",
+      "requestType": "@pearschool-mini/drive",
+      "version": 1
+    },
+    {
+      "id": 5,
+      "name": "@pearschool-mini/add-task",
+      "requestType": "@pearschool-mini/task",
+      "version": 2
+    },
+    {
+      "id": 6,
+      "name": "@pearschool-mini/delete-task",
+      "requestType": "@pearschool-mini/delete-task",
+      "version": 3
+    },
+    {
+      "id": 7,
+      "name": "@pearschool-mini/add-course",
+      "requestType": "@pearschool-mini/course",
+      "version": 4
+    },
+    {
+      "id": 8,
+      "name": "@pearschool-mini/delete-course",
+      "requestType": "@pearschool-mini/delete-course",
+      "version": 4
+    },
+    {
+      "id": 9,
+      "name": "@pearschool-mini/add-video",
+      "requestType": "@pearschool-mini/video",
+      "version": 5
+    }
+  ]
+}
