@@ -4,7 +4,7 @@
 
 ## 🧒 What is this?
 
-**Pearschool Mini** is a project by **Storyteller** for the **Pear Baby Room** — an initiative to build a **peer-to-peer school** ✨ where instructors, trainers, and coaches can teach any topic directly to learners, **without a central server**.
+**Pearschool Mini** is a project by **Storyteller** for the **Pear Baby Room** and the **Pear School Room**  — an initiative to build a **peer-to-peer school** ✨ where instructors, trainers, and coaches can teach any topic directly to learners, **without a central server**.
 
 We built it after studying [**Pearopen — examples-p2p-desktop**](https://github.com/pearopen/examples-p2p-desktop). All credit for the building blocks goes to them. 🙏 We took their examples, learned how a fully P2P app is composed, and assembled this app on top.
 
