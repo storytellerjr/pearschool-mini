@@ -123,3 +123,57 @@ Use the pear-runtime module instead
 ## 10. Phase 1.1 needs end-to-end verification — RESOLVED 2026-05-18
 
 Phase 1.1 (Free clips, account-scoped) verified end-to-end on 2026-05-18: MP4 drop on Alice appears on Bob, chat round-trips, courses / tasks / files unchanged. Closed alongside #8 and #9.
+
+## 11. Share-link recipient (clara) does not see alice's rooms / chats after auto-pair
+
+**Status as of 2026-05-18.** Phase 1.3 Share-link feature is shipped and functional in two of its three claims:
+
+- ✅ Share button produces a real, portable `pear://<key>?invite=<z32>#clip=<id>` link.
+- ✅ Recipient launching with that link auto-pairs (worker reads `?invite=` from `Pear.config.applink`).
+- ✅ `#clip=<id>` fragment auto-navigates to the Free clips tab and the player view.
+- ❌ **Recipient does not see the host's rooms, messages, tasks, courses, or clip metadata after pairing.** Alice is online during clara's launch. Clara reports no rooms in her Chat tab sidebar.
+
+**Suspected cause — race condition in `worker/chat-account.js::_open()`.** When clara joins via invite:
+
+1. Account base pairs against alice's (alice must be online — confirmed).
+2. Base becomes writable.
+3. `view.core.download({ start: 0, end: -1 })` is called but **not awaited**.
+4. `await this.openRooms()` runs immediately and queries the view — returns **empty** because alice's blocks haven't replicated yet.
+5. The bootstrap condition `Object.keys(this.rooms).length === 0 && this.base.writable` evaluates **true** → clara writes her OWN three predefined rooms to a base she's now sharing with alice.
+6. When alice's actual rooms finally sync in later, the base contains a mix of alice's three rooms + clara's three duplicates. Clara's renderer shows hers; she has no writer key for alice's per-room bases, so even when their room metadata syncs in, she can't open them as a writer.
+
+**Why this didn't bite bob.** Bob has joined this way successfully in past sessions. Either the race is non-deterministic (sync was fast enough that step 4 saw alice's rooms before bootstrap), or there's something subtly different about clara's flow (e.g. a colder swarm, alice mid-restage, longer pairing latency).
+
+**Diagnostic recipe.**
+
+1. Restart alice (stay online, blind peer running).
+2. `rm -rf /tmp/pearschool-mini-clara && pear run --store /tmp/pearschool-mini-clara "<share-link>" --name clara`
+3. Wait 60s.
+4. Tail clara's worker log: `tail -f /tmp/pearschool-mini-clara/worker.log` — note any errors during pairing or `openRooms()`.
+5. In clara's Chat tab sidebar, count rooms:
+   - **0 rooms** → account-base pairing didn't complete (alice may have been offline at the wrong moment).
+   - **3 rooms with no messages** → her OWN bootstrapped rooms (race condition confirmed); per-room IDs won't match alice's.
+   - **3 rooms with alice's messages** → race didn't fire this time; it's intermittent.
+   - **6+ rooms** → both sets present; race confirmed.
+
+**Proposed fix.** In `worker/chat-account.js::_open()`, after the base becomes writable and before `openRooms()`:
+
+1. If we joined via invite (`isEmpty && this.invite` was true), explicitly await an initial sync — wait for the first `update` event that brings non-zero rooms, with a timeout fallback (e.g. 10s) so a genuinely-empty host doesn't hang the new peer forever.
+2. Only run the predefined-rooms bootstrap when we both (a) have no remote rooms after the sync wait AND (b) did NOT join via invite (i.e. we're the host of a fresh account, not a joining peer).
+
+Specifically, the bootstrap guard should become:
+
+```js
+const joinedViaInvite = isEmpty && this.invite
+if (!joinedViaInvite && Object.keys(this.rooms).length === 0 && this.base.writable) {
+  for (const def of PREDEFINED_ROOMS) await this.addRoom(def.name, def.info)
+}
+```
+
+The `joinedViaInvite` test is the key — a peer joining someone else's account should **never** bootstrap predefined rooms, full stop. The current code conflates "no remote data yet" with "I'm a fresh host" and that's the bug.
+
+**Workaround for now.** Recipients should:
+- Wait 60+ seconds before clicking around (give sync a chance).
+- If still empty, use the manual flow: alice prints her account invite once with `getInvite()`, sends it out-of-band, recipient launches with `--invite <z32>` separately (no URL).
+
+**Blocks.** Phase 2 (identity + hand-raise) doesn't strictly need this fixed — the bug is in the auto-pair from URL flow specifically, not in the manual flow. But the funnel's Stage 1→2 step is "share a clip → visitor lands → visitor identifies themselves", so without #11 fixed the Share-link UX has a misleading first impression.

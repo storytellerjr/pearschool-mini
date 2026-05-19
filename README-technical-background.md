@@ -215,18 +215,96 @@ pear run --store /tmp/pearschool-mini-user2 . --name bob --invite <alice-account
 
 Drop the `--reset` flag on subsequent launches.
 
-## Build a distributable Pear app
+## Build a distributable Pear app (enables real Share links)
+
+While developing with `pear run .`, the **Share clip** button in the Free clips tab produces a link with a `<your-pear-link>` placeholder — Pear runtime doesn't have a real applink in dev mode. Once you stage the app, `Pear.config.applink` returns a real `pear://<key>` URL and the Share button auto-fills it.
+
+### What touch / stage / seed actually do
+
+The modern Pear CLI splits "publish" into three subcommands:
+
+- **`pear touch`** — generates a **fresh pear-link** for this project (a `pear://<z32-key>` URL). The key is derived from your local Pear identity; nobody else can `touch` the same key. Run this **once per project** — save the link, it's the canonical applink and every future stage/seed/run uses it.
+
+- **`pear stage <pear-link>`** — bundles the working tree (everything not in `pear.stage.ignore` in `package.json`), signs it with your Pear identity, and publishes it under the link from `pear touch`. Each subsequent `pear stage <same-link>` appends a new release; peers running the link pick up the new version on next launch.
+
+- **`pear seed <pear-link>`** — runs a long-lived process that announces the staged hypercore on the Pear swarm. Without an active seeder (or someone else who has run the app and is sharing its blocks), `pear run <pear-link>` from a fresh machine will time out — there's nobody to download the app code from. Leave it running, same posture as the blind peer.
+
+### Touch, build, stage, seed, launch
 
 ```shell
 npm i
-npm run build
+npm run build:db   # only if schema.js changed
+npm run build      # tailwind + swc bundle
 
-pear stage <channel>
-pear seed <channel>
+pear touch                       # one-time per project — copy the printed pear://<key>
+pear stage <pear-link>           # publishes; prints a diff summary
+pear seed <pear-link>            # keep this running in its own terminal
 
 pear run --store /tmp/pearschool-mini-user1 <pear-link> --name alice --blind-peer-key <listening-key>
 pear run --store /tmp/pearschool-mini-user2 <pear-link> --name bob --invite <invite> --blind-peer-key <listening-key>
 ```
+
+### What the Share clip button produces after staging
+
+In dev mode (running with `pear run .`):
+
+```
+pear://<your-pear-link>?invite=<z32>#clip=<id>
+```
+
+After staging and launching with the staged link:
+
+```
+pear://<applink-key>?invite=<z32>#clip=<id>
+```
+
+The recipient runs `pear run "<link>"` (or pastes the link as a `--store ...` arg as in the examples above) — Pear runtime downloads the app from the seeder, the worker boots, the renderer parses `#clip=<id>` from `window.location.hash` and jumps to the player.
+
+### Iteration loop after the first stage
+
+For every code change you want to publish to the channel:
+
+```shell
+npm run build:db   # only if you edited schema.js
+npm run build      # if you edited UI / input.css
+pear stage <pear-link>
+```
+
+You do **not** need to re-run `pear touch` (the link is permanent for this project) or restart `pear seed` (the running seeder picks up new releases on its own).
+
+## Share link recipient flow (auto-pair from URL)
+
+When the **🔗 Share clip** button produces a link, it embeds both pairing info and a navigation target:
+
+```
+pear://<applink-key>?invite=<z32-account-invite>#clip=<clip-id>
+```
+
+The recipient (e.g. **clara**, a brand-new peer) launches the app with:
+
+```shell
+pear run --store /tmp/pearschool-mini-clara "<share-link>" --name clara
+```
+
+What happens on the worker side:
+
+1. `Pear.config.applink` is the full URL the runtime was launched with (including `?invite=…` and `#clip=…`).
+2. `worker/index.js` parses `Pear.config.applink` with `new URL(…)`. When the `--invite` CLI flag is **not** set but `?invite=` is present in the URL, the worker uses the URL value as the invite.
+3. `ChatAccount` opens with that invite, pairs against the host's account base via `blind-pairing` (requires the host to be online — pairing is an interactive handshake the blind peer cannot complete).
+4. Once paired, the host's rooms list, tasks, courses, and free clips replicate over.
+
+On the renderer side:
+
+1. The bundled UI reads `window.location.hash` on mount.
+2. If `clip=<id>` is present, it switches the active tab to **Free clips** and pre-selects that clip's player.
+3. While the clip's binary downloads via Hyperblobs (separate sync from the account-base view), the player shows "Loading clip… (id: …)".
+
+Design notes:
+
+- **Blind-peer-key is intentionally NOT embedded** in the share link. The blind-peer-key is teacher-side infrastructure — anyone holding it can mirror your bases via that blind peer. Embedding it in every share link would turn it into a leaked credential. Recipients get direct-P2P-only sync; if you want to give a specific visitor offline tolerance, share the key out-of-band and have them pass `--blind-peer-key <key>` on the command line.
+- **CLI flag wins over URL** when both are present. `pear run --invite <z32-A> "pear://...?invite=<z32-B>"` uses `<z32-A>`. Explicit beats implicit.
+- **Flag position matters**: `--store` is a `pear run` flag, not a worker flag, so it must appear **before** the project arg (the `pear://` link or `.`). Otherwise pear-run forwards it to the app and the worker's paparam command bails with `UNKNOWN_FLAG: store`.
+- **Re-staging is required** to publish worker / renderer changes to recipients. They download the **staged** bundle, not your local files. `pear stage <pear-link>` after every code change you want shipped.
 
 ## Troubleshoot
 

@@ -360,8 +360,42 @@ function CoursesPanel ({ courses, addCourse, setCourseStatus, deleteCourse }) {
   )
 }
 
-function FreeClipsPanel ({ videos, addVideo }) {
-  const [playerId, setPlayerId] = useState()
+function buildShareLink ({ accountInvite, clipId }) {
+  const raw = globalThis.Pear?.config?.applink
+  const appLink = (typeof raw === 'string' && raw.startsWith('pear://')) ? raw : 'pear://<your-pear-link>'
+  const invite = accountInvite || '<account-invite>'
+  return `${appLink}?invite=${encodeURIComponent(invite)}#clip=${encodeURIComponent(clipId)}`
+}
+
+function isDevPearLink () {
+  const raw = globalThis.Pear?.config?.applink
+  return !(typeof raw === 'string' && raw.startsWith('pear://'))
+}
+
+function FreeClipsPanel ({ videos, addVideo, accountInvite, initialPlayerId }) {
+  const [playerId, setPlayerId] = useState(initialPlayerId)
+  const [copiedFor, setCopiedFor] = useState()
+
+  useEffect(() => {
+    if (initialPlayerId) setPlayerId(initialPlayerId)
+  }, [initialPlayerId])
+
+  const onShare = async (e, clipId) => {
+    e.stopPropagation()
+    const url = buildShareLink({ accountInvite, clipId })
+    try {
+      await navigator.clipboard.writeText(url)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = url
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    setCopiedFor(clipId)
+    setTimeout(() => setCopiedFor((prev) => (prev === clipId ? undefined : prev)), 1500)
+  }
 
   const onAddFiles = (files) => {
     for (const file of files) {
@@ -399,15 +433,26 @@ function FreeClipsPanel ({ videos, addVideo }) {
 
   const renderPlayer = () => {
     const video = videos.find(v => v.id === playerId)
-    if (!video) return null
+    if (!video) {
+      return <div className='text-sm text-gray-500'>Loading clip… (id: {playerId})</div>
+    }
     return (
       <div className='flex flex-col gap-2'>
-        <button
-          className='self-start cursor-pointer bg-gray-200 px-3 py-1 rounded'
-          onClick={() => setPlayerId()}
-        >
-          ← Back to gallery
-        </button>
+        <div className='flex gap-2'>
+          <button
+            className='cursor-pointer bg-gray-200 px-3 py-1 rounded'
+            onClick={() => setPlayerId()}
+          >
+            ← Back to gallery
+          </button>
+          <button
+            className='cursor-pointer bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700'
+            onClick={(e) => onShare(e, video.id)}
+            title='Copy a shareable pear:// link to this clip'
+          >
+            {copiedFor === video.id ? '✓ Link copied' : '🔗 Share clip'}
+          </button>
+        </div>
         <div className='mb-2 text-sm text-gray-600'>{video.name}</div>
         {video.type.startsWith('image/')
           ? (
@@ -430,7 +475,7 @@ function FreeClipsPanel ({ videos, addVideo }) {
           <div
             key={video.id}
             onClick={() => setPlayerId(video.id)}
-            className='cursor-pointer w-60 shadow rounded overflow-hidden bg-gray-50 hover:shadow-lg'
+            className='relative cursor-pointer w-60 shadow rounded overflow-hidden bg-gray-50 hover:shadow-lg'
           >
             {video.type.startsWith('image/')
               ? (
@@ -449,7 +494,16 @@ function FreeClipsPanel ({ videos, addVideo }) {
                   preload='metadata'
                 />
                 )}
-            <div className='p-2 text-xs truncate' title={video.name}>{video.name}</div>
+            <div className='p-2 flex items-center justify-between gap-2'>
+              <div className='text-xs truncate flex-1' title={video.name}>{video.name}</div>
+              <button
+                onClick={(e) => onShare(e, video.id)}
+                className='text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 shrink-0'
+                title='Copy a shareable pear:// link to this clip'
+              >
+                {copiedFor === video.id ? '✓' : '🔗'}
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -463,6 +517,11 @@ function FreeClipsPanel ({ videos, addVideo }) {
       className='bg-white p-4 rounded'
     >
       <h2 className='text-lg font-bold mb-2'>Free clips</h2>
+      {isDevPearLink() && (
+        <div className='mb-3 text-xs text-gray-600 bg-amber-50 border border-amber-200 rounded px-3 py-2'>
+          ℹ️ Dev mode: share links contain <code>&lt;your-pear-link&gt;</code> as a placeholder. Run <code>pear stage &lt;channel&gt;</code> to get a real <code>pear://</code> applink — once staged, the Share button fills it in automatically.
+        </div>
+      )}
       <div className='border-2 border-dashed border-blue-500 p-4 mb-4 bg-blue-50 text-center'>
         <p className='mb-1'>Drop photos or videos anywhere on this tab, or click below to browse</p>
         <input
@@ -481,8 +540,20 @@ function FreeClipsPanel ({ videos, addVideo }) {
 }
 
 function App () {
-  const { rooms, messages, drives, tasks, courses, videos, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo } = useWorker()
+  const { rooms, messages, drives, tasks, courses, videos, accountInvite, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo } = useWorker()
   const [tab, setTab] = useState('chat')
+  const [initialPlayerId, setInitialPlayerId] = useState()
+
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash) return
+    const params = new URLSearchParams(hash.slice(1))
+    const clipId = params.get('clip')
+    if (clipId) {
+      setTab('clips')
+      setInitialPlayerId(clipId)
+    }
+  }, [])
 
   const tabBtn = (id, label) => (
     <button
@@ -506,7 +577,7 @@ function App () {
       {tab === 'files' && <FilesPanel drives={drives} addFile={addFile} />}
       {tab === 'tasks' && <TasksPanel tasks={tasks} addTask={addTask} setTaskStatus={setTaskStatus} deleteTask={deleteTask} />}
       {tab === 'courses' && <CoursesPanel courses={courses} addCourse={addCourse} setCourseStatus={setCourseStatus} deleteCourse={deleteCourse} />}
-      {tab === 'clips' && <FreeClipsPanel videos={videos} addVideo={addVideo} />}
+      {tab === 'clips' && <FreeClipsPanel videos={videos} addVideo={addVideo} accountInvite={accountInvite} initialPlayerId={initialPlayerId} />}
     </div>
   )
 }

@@ -35,7 +35,9 @@ const methods = new Map([
   ['@pearschool-mini/videos', 13],
   [13, '@pearschool-mini/videos'],
   ['@pearschool-mini/add-video', 14],
-  [14, '@pearschool-mini/add-video']
+  [14, '@pearschool-mini/add-video'],
+  ['@pearschool-mini/account-invite', 15],
+  [15, '@pearschool-mini/account-invite']
 ])
 
 class HRPC {
@@ -57,7 +59,8 @@ class HRPC {
       ['@pearschool-mini/add-course', getEncoding('@pearschool-mini/course')],
       ['@pearschool-mini/delete-course', getEncoding('@pearschool-mini/delete-course')],
       ['@pearschool-mini/videos', getEncoding('@pearschool-mini/videos')],
-      ['@pearschool-mini/add-video', c.string]
+      ['@pearschool-mini/add-video', c.string],
+      ['@pearschool-mini/account-invite', c.string]
     ])
     this._responseEncodings = new Map([
     ])
@@ -217,6 +220,10 @@ class HRPC {
     return this._callSync('@pearschool-mini/add-video', args)
   }
 
+  accountInvite(args) {
+    return this._callSync('@pearschool-mini/account-invite', args)
+  }
+
   onRooms(responseFn) {
     this._handlers['@pearschool-mini/rooms'] = responseFn
   }
@@ -277,6 +284,10 @@ class HRPC {
     this._handlers['@pearschool-mini/add-video'] = responseFn
   }
 
+  onAccountInvite(responseFn) {
+    this._handlers['@pearschool-mini/account-invite'] = responseFn
+  }
+
   _requestIsStream(command) {
     return [
     ].includes(command)
@@ -305,7 +316,8 @@ class HRPC {
       '@pearschool-mini/add-course',
       '@pearschool-mini/delete-course',
       '@pearschool-mini/videos',
-      '@pearschool-mini/add-video'
+      '@pearschool-mini/add-video',
+      '@pearschool-mini/account-invite'
     ].includes(command)
   }
 }

@@ -25,14 +25,23 @@ export default async function runWorker (pipe) {
     await fs.promises.rm(storage, { recursive: true, force: true })
   }
 
+  if (!cmd.flags.invite && typeof Pear.config?.applink === 'string') {
+    try {
+      const fromUrl = new URL(Pear.config.applink).searchParams.get('invite')
+      if (fromUrl) cmd.flags.invite = fromUrl
+    } catch {}
+  }
+
   const workerTask = new WorkerTask(rpc, storage, cmd.flags)
   Pear.teardown(() => workerTask.close())
   await workerTask.ready()
   stream.resume()
 
+  const invite = await workerTask.account.getInvite()
   console.log(`Storage: ${storage}`)
   console.log(`Name: ${workerTask.name}`)
-  console.log(`Invite: ${await workerTask.account.getInvite()}`)
+  console.log(`Invite: ${invite}`)
+  rpc.accountInvite(invite)
 
   return workerTask
 }

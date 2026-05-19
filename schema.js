@@ -264,4 +264,8 @@ rpc.register({
   name: 'add-video',
   request: { name: 'string', send: true }
 })
+rpc.register({
+  name: 'account-invite',
+  request: { name: 'string', send: true }
+})
 HRPC.toDisk(hrpc)

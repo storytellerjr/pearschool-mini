@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "schema": [
     {
       "id": 0,
@@ -135,6 +135,15 @@
         "send": true
       },
       "version": 5
+    },
+    {
+      "id": 15,
+      "name": "@pearschool-mini/account-invite",
+      "request": {
+        "name": "string",
+        "send": true
+      },
+      "version": 6
     }
   ]
 }
