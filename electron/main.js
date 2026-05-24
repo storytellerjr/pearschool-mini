@@ -29,13 +29,21 @@ async function createWindow () {
     minWidth: 500,
     backgroundColor: '#1F2430',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false
     }
   })
 
   win.loadFile('index.html')
+  win.webContents.openDevTools({ mode: 'detach' })
+
+  win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+    console.log(`[renderer:${level}] ${sourceId}:${line} ${message}`)
+  })
+  win.webContents.on('render-process-gone', (_e, details) => {
+    console.error('[renderer crashed]', details)
+  })
 
   // Worker → Renderer (raw bytes — HRPC framed-stream is binary)
   ipc.on('data', (data) => win?.webContents.send('from-worker', data))
