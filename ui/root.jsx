@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import Runtime from 'pear-electron'
 
 import useWorker from '../lib/use-worker'
 
@@ -91,7 +90,7 @@ function FilesPanel ({ drives, addFile }) {
 
   const onAddFiles = (files) => {
     for (const file of files) {
-      const filePath = Runtime.media.getPathForFile(file)
+      const filePath = window.pear.getPathForFile(file)
       addFile({ name: file.name, uri: filePath })
     }
   }
@@ -399,7 +398,7 @@ function FreeClipsPanel ({ videos, addVideo, accountInvite, initialPlayerId }) {
 
   const onAddFiles = (files) => {
     for (const file of files) {
-      const filePath = Runtime.media.getPathForFile(file)
+      const filePath = window.pear.getPathForFile(file)
       addVideo(filePath)
     }
   }
