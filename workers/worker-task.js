@@ -110,7 +110,7 @@ export default class WorkerTask extends ReadyResource {
       await this.account.addVideo(data, { name: this.name, at: Date.now() })
     })
     this.rpc.onSetBlindPeerKey(async (key) => {
-      this.swarm.joinPeer(b4a.from(key, 'hex'))
+      this.swarm.joinPeer(idEnc.decode(key))
     })
 
     await this.debounceRooms()
