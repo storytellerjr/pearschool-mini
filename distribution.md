@@ -181,6 +181,58 @@ npx pear seed pear://j4eamjuw74fr4iqg16o65kb58m9ddafqjzszciiert5gmgz8n6ay
 
 ---
 
+## DMG won't open — "The disk image couldn't be opened. Input/output error"
+
+We hit this on the first `npm run make` output. The DMG checksums are valid (`hdiutil verify` passes) and mounts fine via `hdiutil attach` in Terminal, but Finder refuses to open it with an I/O error.
+
+**Root cause:** Electron Forge's DMG maker (using the `ULFO`/LZFSE format) sometimes writes extended attributes that confuse Finder's mount path — specifically a bad `com.apple.FinderInfo` attribute (`deviddsk` instead of the expected disk image type code).
+
+### Fix 1 — Clear extended attributes (fast)
+
+```sh
+xattr -c "out/make/Pearschool Mini-0.0.1-arm64.dmg"
+open "out/make/Pearschool Mini-0.0.1-arm64.dmg"
+```
+
+The `-c` flag clears all extended attributes. Finder re-adds benign ones on access. This fixed our case.
+
+### Fix 2 — Switch to UDZO format (prevents recurrence)
+
+In `forge.config.cjs`, change the DMG format from `ULFO` (LZFSE) to `UDZO` (zlib). `UDZO` is older but Finder handles it more reliably:
+
+```js
+{ name: '@electron-forge/maker-dmg', config: { format: 'UDZO' } }
+```
+
+Then `rm -rf out/ && npm run make` to regenerate.
+
+### Fix 3 — Skip DMG entirely, zip the `.app`
+
+If DMG continues to cause issues, bypass it and distribute the `.app` directly:
+
+```sh
+ditto -c -k --keepParent "out/Pearschool Mini-darwin-arm64/Pearschool Mini.app" "Pearschool Mini.app.zip"
+```
+
+Recipients unzip and drag to Applications. Functionally identical — you just lose the polished drag-to-Applications window that a DMG provides.
+
+### Diagnosing future DMG issues
+
+```sh
+# Verify the DMG's checksum is intact
+hdiutil verify "out/make/Pearschool Mini-0.0.1-arm64.dmg"
+
+# Try mounting via Terminal (bypasses Finder's xattr checks)
+hdiutil attach "out/make/Pearschool Mini-0.0.1-arm64.dmg"
+
+# Inspect extended attributes on the file
+xattr -l "out/make/Pearschool Mini-0.0.1-arm64.dmg"
+```
+
+If `hdiutil verify` passes but Finder won't mount: it's always an xattr issue — `xattr -c` fixes it. If `hdiutil verify` fails: the DMG is genuinely corrupted and you need to re-run `npm run make`.
+
+---
+
 ## When OTA *won't* fire — common gotchas
 
 - **Version not bumped.** `npm version patch` is mandatory; the updater compares versions and skips if they're identical.
