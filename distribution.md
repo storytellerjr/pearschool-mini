@@ -44,6 +44,41 @@ For OTA updates on Windows specifically, the same certificate must be used acros
 
 ---
 
+## End-user install script (copy-paste for non-technical recipients)
+
+Send the user the DMG (`out/make/Pearschool Mini-0.0.1-arm64.dmg`) plus the message below. The friction here exists entirely because the app isn't code-signed yet — once you set up Apple notarization, everything below collapses into "drag to Applications, double-click."
+
+> **Installing Pearschool Mini on your Mac**
+>
+> 1. Double-click the `.dmg` file I sent you. A window opens with the Pearschool Mini icon and an "Applications" folder.
+> 2. Drag the **Pearschool Mini** icon into the **Applications** folder.
+> 3. Close the window. You can throw the `.dmg` in the Trash now.
+> 4. Open Applications, double-click **Pearschool Mini**.
+> 5. You'll see a warning that says the app is "damaged" or "from an unidentified developer." This is normal — the app is fine, Apple just charges $99/year to remove the warning and we haven't paid that yet.
+> 6. Click **Done** or **Move to Trash** to dismiss the warning (don't actually trash it).
+> 7. Open **System Settings → Privacy & Security**.
+> 8. Scroll down to the **Security** section. You'll see a line saying *"Pearschool Mini was blocked from use because it is not from an identified developer."*
+> 9. Click **Open Anyway** next to that message. Enter your Mac password if asked.
+> 10. Confirm by clicking **Open** in the dialog. The app starts.
+>
+> After this one-time confirmation, you can launch Pearschool Mini normally from Applications, Launchpad, or Spotlight forever.
+
+### Faster path for users comfortable with Terminal
+
+```sh
+xattr -dr com.apple.quarantine "/Applications/Pearschool Mini.app"
+```
+
+Removes the quarantine flag and the app launches without any warning, ever. Requires the user to have already moved the app to `/Applications`.
+
+### Why this warning appears (for your own reference)
+
+macOS applies the `com.apple.quarantine` extended attribute to any file that arrives from the internet, AirDrop, Dropbox, etc. On launch, Gatekeeper checks if the binary is signed and notarized by an Apple Developer account. Without that, Gatekeeper refuses — sometimes with the misleading "damaged" wording on Sonoma 14.6+ and Sequoia 15. The app itself is intact; only the trust check fails.
+
+The `.app` bundle is a folder that macOS displays as a single icon (~250MB unzipped). Once installed, it's fully self-contained — Chromium, Node, your renderer bundle, and the Bare worker all live inside the bundle. The OTA mechanism updates that bundle in place when `pear stage` publishes a new version.
+
+---
+
 ## Three-phase test plan (two MacBooks, no signing yet)
 
 ### Phase 1 — Run the installer on this MacBook
