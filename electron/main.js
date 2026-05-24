@@ -36,14 +36,17 @@ async function createWindow () {
   })
 
   win.loadFile('index.html')
-  win.webContents.openDevTools({ mode: 'detach' })
 
-  win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
-    console.log(`[renderer:${level}] ${sourceId}:${line} ${message}`)
-  })
-  win.webContents.on('render-process-gone', (_e, details) => {
-    console.error('[renderer crashed]', details)
-  })
+  // Dev only: auto-open DevTools and forward renderer console / crashes to forge stdout
+  if (!app.isPackaged) {
+    win.webContents.openDevTools({ mode: 'detach' })
+    win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+      console.log(`[renderer:${level}] ${sourceId}:${line} ${message}`)
+    })
+    win.webContents.on('render-process-gone', (_e, details) => {
+      console.error('[renderer crashed]', details)
+    })
+  }
 
   // Worker → Renderer (raw bytes — HRPC framed-stream is binary)
   ipc.on('data', (data) => win?.webContents.send('from-worker', data))
