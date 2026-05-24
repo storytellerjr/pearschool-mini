@@ -56,6 +56,8 @@ async function createWindow () {
   win.on('closed', async () => { await pear.close(); win = null })
 }
 
+ipcMain.on('get-version', (e) => { e.returnValue = pkg.version })
+
 app.whenReady().then(createWindow)
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
 app.on('activate', () => { if (!win) createWindow() })

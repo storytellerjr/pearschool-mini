@@ -543,19 +543,22 @@ function KeysPanel ({ accountInvite, joinRoom, setBlindPeerKey }) {
   const [blindKey, setBlindKey] = useState('')
   const [inviteStatus, setInviteStatus] = useState('')
   const [blindKeyStatus, setBlindKeyStatus] = useState('')
+  const [blindKeyValue, setBlindKeyValue] = useState('')
+  const [inviteUsed, setInviteUsed] = useState('')
 
   const onJoin = () => {
     if (!invite.trim()) return
     joinRoom(invite.trim())
-    setInviteStatus('Joining...')
+    setInviteUsed(invite.trim().slice(0, 12) + '...')
+    setInviteStatus('Joined')
     setInvite('')
-    setTimeout(() => setInviteStatus(''), 3000)
   }
 
   const onSetBlindKey = () => {
     if (!blindKey.trim()) return
     setBlindPeerKey(blindKey.trim())
-    setBlindKeyStatus('Connected')
+    setBlindKeyValue(blindKey.trim().slice(0, 12) + '...')
+    setBlindKeyStatus('Key set')
     setBlindKey('')
     setTimeout(() => setBlindKeyStatus(''), 3000)
   }
@@ -615,7 +618,7 @@ function KeysPanel ({ accountInvite, joinRoom, setBlindPeerKey }) {
             Enter
           </button>
         </div>
-        {inviteStatus && <div className='text-sm text-green-600 mt-1'>{inviteStatus}</div>}
+        {inviteStatus && <div className='text-sm text-green-600 mt-1'>&#10003; {inviteStatus}: {inviteUsed}</div>}
       </div>
 
       <div className='mb-2'>
@@ -637,7 +640,7 @@ function KeysPanel ({ accountInvite, joinRoom, setBlindPeerKey }) {
             Enter
           </button>
         </div>
-        {blindKeyStatus && <div className='text-sm text-green-600 mt-1'>{blindKeyStatus}</div>}
+        {blindKeyStatus && <div className='text-sm text-green-600 mt-1'>&#10003; {blindKeyStatus}: {blindKeyValue}</div>}
       </div>
     </div>
   )
@@ -670,13 +673,16 @@ function App () {
 
   return (
     <div className='bg-slate-700 min-h-screen p-4'>
-      <div className='flex mb-3 gap-1'>
+      <div className='flex mb-3 gap-1 items-center'>
         {tabBtn('chat', 'Chat')}
         {tabBtn('files', 'Files')}
         {tabBtn('tasks', 'Tasks')}
         {tabBtn('courses', 'Courses')}
         {tabBtn('clips', 'Free clips')}
         {tabBtn('keys', 'Keys')}
+        <div className='ml-auto text-xs text-slate-400 font-mono'>
+          v{window.pear?.version || '?'}
+        </div>
       </div>
       {tab === 'chat' && <ChatPanel rooms={rooms} messages={messages} addMessage={addMessage} />}
       {tab === 'files' && <FilesPanel drives={drives} addFile={addFile} />}
