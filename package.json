@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "main": "electron/main.js",
-  "upgrade": "pear://PLACEHOLDER_RUN_PEAR_TOUCH_TO_GENERATE",
+  "upgrade": "pear://j4eamjuw74fr4iqg16o65kb58m9ddafqjzszciiert5gmgz8n6ay",
   "updates": false,
   "scripts": {
     "clean": "rm -rf build",
