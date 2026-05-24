@@ -1,7 +1,7 @@
 {
   "name": "pearschool-mini",
   "productName": "Pearschool Mini",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
   "main": "electron/main.js",
   "upgrade": "pear://j4eamjuw74fr4iqg16o65kb58m9ddafqjzszciiert5gmgz8n6ay",
