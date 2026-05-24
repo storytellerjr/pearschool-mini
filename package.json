@@ -67,5 +67,8 @@
       "bare": "bare-path",
       "default": "path"
     }
-  }
+  },
+  "description": "Pear School Mini, a decentralized peer to peer school. Teach anybody from the world, anywhere.",
+  "author": "storyteller",
+  "license": "MIT"
 }
