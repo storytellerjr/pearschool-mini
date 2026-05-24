@@ -12,9 +12,8 @@ let win, ipc
 
 async function createWindow () {
   const pear = new PearRuntime({
+    ...pkg,
     dir: path.join(app.getPath('userData'), 'pear'),
-    version: pkg.version,
-    upgrade: pkg.upgrade,
     name: pkg.productName
   })
 
