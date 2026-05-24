@@ -144,6 +144,15 @@
         "send": true
       },
       "version": 6
+    },
+    {
+      "id": 16,
+      "name": "@pearschool-mini/set-blind-peer-key",
+      "request": {
+        "name": "string",
+        "send": true
+      },
+      "version": 7
     }
   ]
 }

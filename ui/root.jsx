@@ -538,8 +538,113 @@ function FreeClipsPanel ({ videos, addVideo, accountInvite, initialPlayerId }) {
   )
 }
 
+function KeysPanel ({ accountInvite, joinRoom, setBlindPeerKey }) {
+  const [invite, setInvite] = useState('')
+  const [blindKey, setBlindKey] = useState('')
+  const [inviteStatus, setInviteStatus] = useState('')
+  const [blindKeyStatus, setBlindKeyStatus] = useState('')
+
+  const onJoin = () => {
+    if (!invite.trim()) return
+    joinRoom(invite.trim())
+    setInviteStatus('Joining...')
+    setInvite('')
+    setTimeout(() => setInviteStatus(''), 3000)
+  }
+
+  const onSetBlindKey = () => {
+    if (!blindKey.trim()) return
+    setBlindPeerKey(blindKey.trim())
+    setBlindKeyStatus('Connected')
+    setBlindKey('')
+    setTimeout(() => setBlindKeyStatus(''), 3000)
+  }
+
+  const onCopyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(accountInvite)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = accountInvite
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+  }
+
+  return (
+    <div className='bg-white p-4 rounded'>
+      <h2 className='text-lg font-bold mb-4'>Keys</h2>
+
+      <div className='mb-6'>
+        <h3 className='font-bold mb-1'>Your Invite Key</h3>
+        <p className='text-sm text-gray-500 mb-2'>Share this with others so they can connect to you.</p>
+        <div className='flex gap-2'>
+          <input
+            type='text'
+            value={accountInvite || 'Loading...'}
+            readOnly
+            className='flex-1 p-2 border border-gray-300 rounded bg-gray-50 text-sm font-mono'
+          />
+          <button
+            onClick={onCopyInvite}
+            className='bg-slate-700 text-white px-4 py-2 rounded'
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <div className='mb-6'>
+        <h3 className='font-bold mb-1'>Invite Key</h3>
+        <p className='text-sm text-gray-500 mb-2'>Paste another peer's invite key to connect to them.</p>
+        <div className='flex gap-2'>
+          <input
+            type='text'
+            value={invite}
+            onChange={e => setInvite(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') onJoin() }}
+            placeholder='Paste invite key here...'
+            className='flex-1 p-2 border border-gray-300 rounded text-sm font-mono'
+          />
+          <button
+            onClick={onJoin}
+            className='bg-slate-700 text-white px-4 py-2 rounded'
+          >
+            Enter
+          </button>
+        </div>
+        {inviteStatus && <div className='text-sm text-green-600 mt-1'>{inviteStatus}</div>}
+      </div>
+
+      <div className='mb-2'>
+        <h3 className='font-bold mb-1'>Blind Peer Listening Key</h3>
+        <p className='text-sm text-gray-500 mb-2'>Enter the key of a blind peer relay to enable always-on connectivity.</p>
+        <div className='flex gap-2'>
+          <input
+            type='text'
+            value={blindKey}
+            onChange={e => setBlindKey(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') onSetBlindKey() }}
+            placeholder='Paste blind peer key here...'
+            className='flex-1 p-2 border border-gray-300 rounded text-sm font-mono'
+          />
+          <button
+            onClick={onSetBlindKey}
+            className='bg-slate-700 text-white px-4 py-2 rounded'
+          >
+            Enter
+          </button>
+        </div>
+        {blindKeyStatus && <div className='text-sm text-green-600 mt-1'>{blindKeyStatus}</div>}
+      </div>
+    </div>
+  )
+}
+
 function App () {
-  const { rooms, messages, drives, tasks, courses, videos, accountInvite, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo } = useWorker()
+  const { rooms, messages, drives, tasks, courses, videos, accountInvite, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo, joinRoom, setBlindPeerKey } = useWorker()
   const [tab, setTab] = useState('chat')
   const [initialPlayerId, setInitialPlayerId] = useState()
 
@@ -571,12 +676,14 @@ function App () {
         {tabBtn('tasks', 'Tasks')}
         {tabBtn('courses', 'Courses')}
         {tabBtn('clips', 'Free clips')}
+        {tabBtn('keys', 'Keys')}
       </div>
       {tab === 'chat' && <ChatPanel rooms={rooms} messages={messages} addMessage={addMessage} />}
       {tab === 'files' && <FilesPanel drives={drives} addFile={addFile} />}
       {tab === 'tasks' && <TasksPanel tasks={tasks} addTask={addTask} setTaskStatus={setTaskStatus} deleteTask={deleteTask} />}
       {tab === 'courses' && <CoursesPanel courses={courses} addCourse={addCourse} setCourseStatus={setCourseStatus} deleteCourse={deleteCourse} />}
       {tab === 'clips' && <FreeClipsPanel videos={videos} addVideo={addVideo} accountInvite={accountInvite} initialPlayerId={initialPlayerId} />}
+      {tab === 'keys' && <KeysPanel accountInvite={accountInvite} joinRoom={joinRoom} setBlindPeerKey={setBlindPeerKey} />}
     </div>
   )
 }
