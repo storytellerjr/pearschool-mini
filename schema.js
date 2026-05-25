@@ -147,6 +147,14 @@ schema.register({
   array: true,
   type: '@pearschool-mini/video'
 })
+schema.register({
+  name: 'configure',
+  fields: [
+    { name: 'name', type: 'string', required: true },
+    { name: 'invite', type: 'string' },
+    { name: 'blindPeerKey', type: 'string' }
+  ]
+})
 Hyperschema.toDisk(hyperSchema)
 
 const hyperdb = HyperdbBuilder.from(SCHEMA_DIR, DB_DIR)
@@ -267,5 +275,13 @@ rpc.register({
 rpc.register({
   name: 'account-invite',
   request: { name: 'string', send: true }
+})
+rpc.register({
+  name: 'set-blind-peer-key',
+  request: { name: 'string', send: true }
+})
+rpc.register({
+  name: 'configure',
+  request: { name: '@pearschool-mini/configure', send: true }
 })
 HRPC.toDisk(hrpc)

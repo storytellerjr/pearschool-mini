@@ -8,6 +8,12 @@ const require = createRequire(import.meta.url)
 const pkg = require('../package.json')
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+const profileArg = process.argv.find(a => a.startsWith('--profile='))
+const profile = profileArg ? profileArg.split('=')[1] : null
+if (profile) {
+  app.setPath('userData', path.join(app.getPath('userData'), 'profiles', profile))
+}
+
 let win, ipc
 
 async function createWindow () {

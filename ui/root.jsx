@@ -538,29 +538,22 @@ function FreeClipsPanel ({ videos, addVideo, accountInvite, initialPlayerId }) {
   )
 }
 
-function KeysPanel ({ accountInvite, joinRoom, setBlindPeerKey }) {
-  const [invite, setInvite] = useState('')
+function KeysPanel ({ accountInvite, configure }) {
+  const [name, setName] = useState('')
   const [blindKey, setBlindKey] = useState('')
-  const [inviteStatus, setInviteStatus] = useState('')
-  const [blindKeyStatus, setBlindKeyStatus] = useState('')
-  const [blindKeyValue, setBlindKeyValue] = useState('')
-  const [inviteUsed, setInviteUsed] = useState('')
+  const [invite, setInvite] = useState('')
+  const [connecting, setConnecting] = useState(false)
 
-  const onJoin = () => {
-    if (!invite.trim()) return
-    joinRoom(invite.trim())
-    setInviteUsed(invite.trim().slice(0, 12) + '...')
-    setInviteStatus('Joined')
-    setInvite('')
-  }
+  const connected = !!accountInvite
 
-  const onSetBlindKey = () => {
-    if (!blindKey.trim()) return
-    setBlindPeerKey(blindKey.trim())
-    setBlindKeyValue(blindKey.trim().slice(0, 12) + '...')
-    setBlindKeyStatus('Key set')
-    setBlindKey('')
-    setTimeout(() => setBlindKeyStatus(''), 3000)
+  const onConnect = () => {
+    if (!name.trim() || !blindKey.trim()) return
+    setConnecting(true)
+    configure({
+      name: name.trim(),
+      blindPeerKey: blindKey.trim(),
+      invite: invite.trim() || ''
+    })
   }
 
   const onCopyInvite = async () => {
@@ -576,17 +569,73 @@ function KeysPanel ({ accountInvite, joinRoom, setBlindPeerKey }) {
     }
   }
 
+  if (!connected) {
+    return (
+      <div className='bg-white p-4 rounded max-w-lg mx-auto'>
+        <h2 className='text-lg font-bold mb-1'>Setup</h2>
+        <p className='text-sm text-gray-500 mb-4'>
+          Start a blind peer in a terminal first, then enter your details below.
+        </p>
+
+        <div className='mb-4'>
+          <label className='font-bold text-sm mb-1 block'>Your name</label>
+          <input
+            type='text'
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder='e.g. alice'
+            className='w-full p-2 border border-gray-300 rounded'
+          />
+        </div>
+
+        <div className='mb-4'>
+          <label className='font-bold text-sm mb-1 block'>Blind peer listening key</label>
+          <p className='text-xs text-gray-500 mb-1'>Paste the key from your running blind peer.</p>
+          <input
+            type='text'
+            value={blindKey}
+            onChange={e => setBlindKey(e.target.value)}
+            placeholder='Paste blind peer key here...'
+            className='w-full p-2 border border-gray-300 rounded font-mono text-sm'
+          />
+        </div>
+
+        <div className='mb-6'>
+          <label className='font-bold text-sm mb-1 block'>Account invite (optional)</label>
+          <p className='text-xs text-gray-500 mb-1'>
+            Leave empty to create a new account. Paste another user's invite to join their account.
+          </p>
+          <input
+            type='text'
+            value={invite}
+            onChange={e => setInvite(e.target.value)}
+            placeholder='Paste account invite to join...'
+            className='w-full p-2 border border-gray-300 rounded font-mono text-sm'
+          />
+        </div>
+
+        <button
+          onClick={onConnect}
+          disabled={!name.trim() || !blindKey.trim() || connecting}
+          className='w-full bg-slate-700 text-white px-4 py-3 rounded font-bold disabled:opacity-50'
+        >
+          {connecting ? 'Connecting...' : 'Connect'}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className='bg-white p-4 rounded'>
       <h2 className='text-lg font-bold mb-4'>Keys</h2>
 
       <div className='mb-6'>
-        <h3 className='font-bold mb-1'>Your Invite Key</h3>
-        <p className='text-sm text-gray-500 mb-2'>Share this with others so they can connect to you.</p>
+        <h3 className='font-bold mb-1'>Your Account Invite</h3>
+        <p className='text-sm text-gray-500 mb-2'>Share this with others so they can join your account.</p>
         <div className='flex gap-2'>
           <input
             type='text'
-            value={accountInvite || 'Loading...'}
+            value={accountInvite}
             readOnly
             className='flex-1 p-2 border border-gray-300 rounded bg-gray-50 text-sm font-mono'
           />
@@ -599,57 +648,21 @@ function KeysPanel ({ accountInvite, joinRoom, setBlindPeerKey }) {
         </div>
       </div>
 
-      <div className='mb-6'>
-        <h3 className='font-bold mb-1'>Invite Key</h3>
-        <p className='text-sm text-gray-500 mb-2'>Paste another peer's invite key to connect to them.</p>
-        <div className='flex gap-2'>
-          <input
-            type='text'
-            value={invite}
-            onChange={e => setInvite(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') onJoin() }}
-            placeholder='Paste invite key here...'
-            className='flex-1 p-2 border border-gray-300 rounded text-sm font-mono'
-          />
-          <button
-            onClick={onJoin}
-            className='bg-slate-700 text-white px-4 py-2 rounded'
-          >
-            Enter
-          </button>
-        </div>
-        {inviteStatus && <div className='text-sm text-green-600 mt-1'>&#10003; {inviteStatus}: {inviteUsed}</div>}
-      </div>
-
-      <div className='mb-2'>
-        <h3 className='font-bold mb-1'>Blind Peer Listening Key</h3>
-        <p className='text-sm text-gray-500 mb-2'>Enter the key of a blind peer relay to enable always-on connectivity.</p>
-        <div className='flex gap-2'>
-          <input
-            type='text'
-            value={blindKey}
-            onChange={e => setBlindKey(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') onSetBlindKey() }}
-            placeholder='Paste blind peer key here...'
-            className='flex-1 p-2 border border-gray-300 rounded text-sm font-mono'
-          />
-          <button
-            onClick={onSetBlindKey}
-            className='bg-slate-700 text-white px-4 py-2 rounded'
-          >
-            Enter
-          </button>
-        </div>
-        {blindKeyStatus && <div className='text-sm text-green-600 mt-1'>&#10003; {blindKeyStatus}: {blindKeyValue}</div>}
-      </div>
+      <div className='text-sm text-green-600'>Connected</div>
     </div>
   )
 }
 
 function App () {
-  const { rooms, messages, drives, tasks, courses, videos, accountInvite, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo, joinRoom, setBlindPeerKey } = useWorker()
-  const [tab, setTab] = useState('chat')
+  const { rooms, messages, drives, tasks, courses, videos, accountInvite, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo, configure } = useWorker()
+  const [tab, setTab] = useState('keys')
   const [initialPlayerId, setInitialPlayerId] = useState()
+
+  const connected = !!accountInvite
+
+  useEffect(() => {
+    if (connected && tab === 'keys') setTab('chat')
+  }, [connected])
 
   useEffect(() => {
     const hash = window.location.hash
@@ -665,7 +678,8 @@ function App () {
   const tabBtn = (id, label) => (
     <button
       onClick={() => setTab(id)}
-      className={`px-4 py-2 rounded-t ${tab === id ? 'bg-white text-slate-800 font-bold' : 'bg-slate-400 text-white'}`}
+      disabled={!connected && id !== 'keys'}
+      className={`px-4 py-2 rounded-t ${tab === id ? 'bg-white text-slate-800 font-bold' : 'bg-slate-400 text-white'} ${!connected && id !== 'keys' ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {label}
     </button>
@@ -689,7 +703,7 @@ function App () {
       {tab === 'tasks' && <TasksPanel tasks={tasks} addTask={addTask} setTaskStatus={setTaskStatus} deleteTask={deleteTask} />}
       {tab === 'courses' && <CoursesPanel courses={courses} addCourse={addCourse} setCourseStatus={setCourseStatus} deleteCourse={deleteCourse} />}
       {tab === 'clips' && <FreeClipsPanel videos={videos} addVideo={addVideo} accountInvite={accountInvite} initialPlayerId={initialPlayerId} />}
-      {tab === 'keys' && <KeysPanel accountInvite={accountInvite} joinRoom={joinRoom} setBlindPeerKey={setBlindPeerKey} />}
+      {tab === 'keys' && <KeysPanel accountInvite={accountInvite} configure={configure} />}
     </div>
   )
 }

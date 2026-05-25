@@ -7,7 +7,6 @@ import WorkerTask from './worker-task'
 const storageRoot = Bare.argv[2]
 const storage = path.join(storageRoot, 'corestore')
 
-// Bare.IPC-backed duplex pipe (duck-typed for framed-stream)
 class BareIPCPipe {
   constructor () { this._dataListeners = [] }
   on (ev, cb) { if (ev === 'data') this._dataListeners.push(cb); return this }
@@ -28,15 +27,26 @@ const stream = new FramedStream(pipe)
 const rpc = new HRPC(stream)
 stream.pause()
 
-const flags = {}
+let workerTask = null
 
-const workerTask = new WorkerTask(rpc, storage, flags)
-Bare.on('teardown', () => workerTask.close())
-await workerTask.ready()
+rpc.onConfigure(async (data) => {
+  if (workerTask) return
+
+  const flags = {
+    name: data.name || undefined,
+    invite: data.invite || undefined,
+    blindPeerKey: data.blindPeerKey ? [data.blindPeerKey] : []
+  }
+
+  workerTask = new WorkerTask(rpc, storage, flags)
+  Bare.on('teardown', () => workerTask.close())
+  await workerTask.ready()
+
+  const invite = await workerTask.account.getInvite()
+  console.log(`Storage: ${storage}`)
+  console.log(`Name: ${workerTask.name}`)
+  console.log(`Invite: ${invite}`)
+  rpc.accountInvite(invite)
+})
+
 stream.resume()
-
-const invite = await workerTask.account.getInvite()
-console.log(`Storage: ${storage}`)
-console.log(`Name: ${workerTask.name}`)
-console.log(`Invite: ${invite}`)
-rpc.accountInvite(invite)

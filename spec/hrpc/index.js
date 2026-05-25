@@ -39,7 +39,9 @@ const methods = new Map([
   ['@pearschool-mini/account-invite', 15],
   [15, '@pearschool-mini/account-invite'],
   ['@pearschool-mini/set-blind-peer-key', 16],
-  [16, '@pearschool-mini/set-blind-peer-key']
+  [16, '@pearschool-mini/set-blind-peer-key'],
+  ['@pearschool-mini/configure', 17],
+  [17, '@pearschool-mini/configure']
 ])
 
 class HRPC {
@@ -63,7 +65,8 @@ class HRPC {
       ['@pearschool-mini/videos', getEncoding('@pearschool-mini/videos')],
       ['@pearschool-mini/add-video', c.string],
       ['@pearschool-mini/account-invite', c.string],
-      ['@pearschool-mini/set-blind-peer-key', c.string]
+      ['@pearschool-mini/set-blind-peer-key', c.string],
+      ['@pearschool-mini/configure', getEncoding('@pearschool-mini/configure')]
     ])
     this._responseEncodings = new Map([
     ])
@@ -231,6 +234,10 @@ class HRPC {
     return this._callSync('@pearschool-mini/set-blind-peer-key', args)
   }
 
+  configure(args) {
+    return this._callSync('@pearschool-mini/configure', args)
+  }
+
   onRooms(responseFn) {
     this._handlers['@pearschool-mini/rooms'] = responseFn
   }
@@ -299,6 +306,10 @@ class HRPC {
     this._handlers['@pearschool-mini/set-blind-peer-key'] = responseFn
   }
 
+  onConfigure(responseFn) {
+    this._handlers['@pearschool-mini/configure'] = responseFn
+  }
+
   _requestIsStream(command) {
     return [
     ].includes(command)
@@ -329,7 +340,8 @@ class HRPC {
       '@pearschool-mini/videos',
       '@pearschool-mini/add-video',
       '@pearschool-mini/account-invite',
-      '@pearschool-mini/set-blind-peer-key'
+      '@pearschool-mini/set-blind-peer-key',
+      '@pearschool-mini/configure'
     ].includes(command)
   }
 }
