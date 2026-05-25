@@ -14,140 +14,151 @@ The whole project is developed pair-style with **Claude AI inside the Void Edito
 
 > 📚 Want the deep stack stuff (app architecture, blind-peering internals, schema migrations, the Tasks-tab walkthrough, building a distributable Pear app, full troubleshoot)? See [`README-technical-background.md`](README-technical-background.md).
 
-## ⚙️ Install (once)
+---
 
-```shell
-npm i
-npm run build:db   # generates ./spec/{schema,db,dispatch,hrpc}
-npm run build      # tailwind + swc bundle for the renderer
-```
+## 🍐 Install on Mac (for recipients)
 
-## 🚀 Run the three processes (three terminals)
+If someone sent you the app as a `.zip` file, follow these steps:
+
+1. Unzip the file — you'll see **Pearschool Mini.app**.
+2. Drag **Pearschool Mini.app** into your **Applications** folder.
+3. Open **Terminal** (search for it in Spotlight) and run:
+   ```sh
+   xattr -dr com.apple.quarantine "/Applications/Pearschool Mini.app"
+   ```
+4. Double-click **Pearschool Mini** in Applications. It opens normally from now on.
+
+> ⚠️ **Why step 3?** macOS blocks apps that aren't code-signed by an Apple Developer account ($99/yr). The app is fine — Apple just doesn't know us yet. The `xattr` command tells macOS to trust it. You only need to do this once.
+
+> 💡 **Alternative (no Terminal):** Right-click the app in Finder → **Open** → click **Open** in the warning dialog. macOS remembers your choice after the first time.
+
+---
+
+## 🚀 How to use
 
 ### 1️⃣ Start the blind peer
 
-In **terminal 1**, leave running for the whole session:
+The blind peer is a relay that helps users find each other. One person needs to run it in a terminal and share the key with all participants.
 
 ```shell
 npx --yes blind-peer -s /tmp/pearschool-mini-blind1
 ```
 
-Copy the `Listening at <listening-key>` line from its log. 🔑
+Copy the `Listening at <listening-key>` line. 🔑
 
-### 2️⃣ Start alice (creates the account + 3 rooms)
+### 2️⃣ Launch the app
 
-In **terminal 2**:
+Open **Pearschool Mini**. You'll see the **Keys** tab with a setup form.
+
+**User 1 (creates the account):**
+- Enter your **name** (e.g. `alice`)
+- Paste the **blind peer listening key** from step 1
+- Leave **Account invite** empty
+- Click **Connect**
+- Your **account invite** appears — copy it and share it with the next user 📨
+
+**User 2 (joins the account):**
+- Enter your **name** (e.g. `bob`)
+- Paste the same **blind peer listening key**
+- Paste **User 1's account invite**
+- Click **Connect**
+
+Both users now share the same rooms (**Welcome Lobby**, **Community Chat**, **Personal Notes**). Chat, drop files, add tasks — everything syncs between users. 🎉
+
+> 👀 **User 1 must be online** when User 2 connects for the first time — pairing is a live handshake. After the first pairing, both users can connect independently.
+
+---
+
+## ⚙️ For developers
+
+### Install and build
 
 ```shell
-pear run --store /tmp/pearschool-mini-user1 . --name alice --blind-peer-key <listening-key-from-step-1>
+npm i
+npm run build:db   # generates ./spec/{schema,db,dispatch,hrpc}
+npm run build      # tailwind + esbuild bundle for the renderer
 ```
 
-Alice's terminal prints an `Invite: <z32-string>` line — **that's the account invite**. Copy it for bob. 📨
-
-### 3️⃣ Start bob (joins alice's account)
-
-In **terminal 3**:
+### Run in dev mode
 
 ```shell
-pear run --store /tmp/pearschool-mini-user2 . --name bob --invite <alice-account-invite> --blind-peer-key <listening-key-from-step-1> --reset
+# Terminal 1: blind peer
+npx --yes blind-peer -s /tmp/pearschool-mini-blind1
+
+# Terminal 2: launch the app
+npm start
 ```
 
-> ⚠️ Use `--reset` only on bob's **first** launch (or after a schema change). Drop it on subsequent launches so the store persists between sessions.
+### Test with two users on one machine
 
-Both windows should now show the same three rooms (**Welcome Lobby**, **Community Chat**, **Personal Notes**). Chat, drop files, add tasks — everything round-trips between alice and bob. 🎉
+Use `--profile` to give each instance its own data directory:
+
+```shell
+# Terminal 2: alice
+npm start -- -- --profile=alice
+
+# Terminal 3: bob
+npm start -- -- --profile=bob
+```
+
+### Build a distributable .app
+
+```shell
+npm run make
+```
+
+The `.app` bundle is at `out/Pearschool Mini-darwin-arm64/Pearschool Mini.app`.
+
+To create a zip for sharing:
+
+```shell
+ditto -c -k --keepParent "out/Pearschool Mini-darwin-arm64/Pearschool Mini.app" "Pearschool Mini v0.0.5-app.zip"
+```
+
+> ⚠️ Use `-app.zip` (with a hyphen), not `.app.zip` (with a dot) — the dot causes errors.
+
+---
 
 ## 🔗 Share a clip
 
-Every clip in the **Free clips** tab has a small **🔗** button (and a big **🔗 Share clip** button in the player view). Click it to copy a `pear://` deep-link to that clip — anyone who launches the link with `pear run` lands directly on the playback view for that clip.
+Every clip in the **Free clips** tab has a **🔗** button. Click it to copy a `pear://` deep-link — anyone who opens the link lands directly on that clip.
 
-The link format is:
+> ⚠️ **Dev mode caveat**: while running via `npm start`, the link contains a placeholder. Run `pear stage` to get a real `pear://` applink (see below).
 
-```
-pear://run/<your-pear-link>?invite=<z32-account-invite>#clip=<clip-id>
-```
+---
 
-- `?invite=` auto-pairs the recipient into your account (so they inherit your rooms + see your clips).
-- `#clip=` makes the app jump straight to the clip's playback view on first paint.
+## 🚢 Stage and seed (for OTA updates)
 
-> ⚠️ **Dev mode caveat**: while you're running `pear run .` (no staging yet), the link contains `<your-pear-link>` as a placeholder — Pear runtime doesn't have a real applink in dev. The app shows a small amber banner under the Free clips heading reminding you of this. To get a **real, shareable** link, **stage and seed** the app first (see below).
-
-## 🚢 Stage and seed a link
-
-Once you stage the app, the Share button auto-fills a real `pear://<key>` applink — no more dev-mode placeholder. Three one-time commands, then a short loop for every code change.
+Once staged, the app auto-updates over P2P — no reinstall needed.
 
 ### One-time setup
 
-**1️⃣ Touch** — generate a fresh pear-link for this project (run **once**):
-
 ```shell
-pear touch
+pear touch                    # generates a pear:// link (run once)
+pear stage <pear-link>        # publishes your build to that link
+pear seed <pear-link>         # announces on the swarm (leave running)
 ```
 
-It prints `pear://<key>`. **Save it somewhere** — it's the canonical applink for this app, and every future `stage`, `seed`, and `run` uses it. 🔑
-
-**2️⃣ Stage** — publish your local code to that link:
-
-```shell
-pear stage <pear-link-from-touch>
-```
-
-**3️⃣ Seed** — announce the staged hypercore on the swarm (leave this running in its own terminal, same posture as the blind peer):
-
-```shell
-pear seed <pear-link-from-touch>
-```
-
-### Launch from the staged link
-
-```shell
-pear run --store /tmp/pearschool-mini-user1 <pear-link> --name alice --blind-peer-key <listening-key>
-pear run --store /tmp/pearschool-mini-user2 <pear-link> --name bob --invite <alice-account-invite> --blind-peer-key <listening-key>
-```
-
-Share clip now produces real, portable links. Anyone with Pear runtime installed can `pear run "<link>"` and land directly on your clip. 🎬
-
-### Iteration loop after a code change
+### After a code change
 
 ```shell
 npm run build:db   # only if you edited schema.js
 npm run build      # if you edited UI / input.css
-pear stage <pear-link>   # republishes; running peers + seeders pick it up
+pear stage <pear-link>   # republishes; running peers pick it up
 ```
 
 You do **not** re-run `pear touch` (the link is permanent) or restart `pear seed` (it tracks the link, not a snapshot).
 
 > 📚 More on what touch / stage / seed do under the hood is in [`README-technical-background.md`](README-technical-background.md).
 
-## 👋 Invite a new visitor (e.g. clara)
-
-Once the app is staged (above) and you've clicked the **🔗 Share clip** button on any clip, you have a link like:
-
-```
-pear://<key>?invite=<z32>#clip=<id>
-```
-
-A brand-new visitor (let's call her **clara**) can join in **one command** — no need to extract the invite by hand:
-
-```shell
-pear run --store /tmp/pearschool-mini-clara "<the-share-link>" --name clara
-```
-
-The worker reads the `?invite=` from the URL automatically, pairs clara into alice's account, and the `#clip=` fragment opens the player on first paint.
-
-A few gotchas worth knowing:
-
-- ⚠️ **Flag order**: `--store` must come **before** the link (it's a `pear run` flag, not a worker flag). Same shape as alice's command, just with a link in place of `.`. If you put `--store` after the link, you'll get `UNKNOWN_FLAG: store`.
-- 👀 **Alice must be online** during clara's first launch — pairing is a live handshake; the blind peer can't complete it for her. Subsequent launches with the same `--store` reuse the persisted store and work fine when alice is offline.
-- ⏳ **Sync takes a moment** — after pairing, alice's rooms list, tasks, courses, and free clips replicate into clara over a few seconds. The **clip's binary** (the actual video file) is downloaded separately via Hyperblobs and can take longer (10–60s depending on file size + network). The player view shows "Loading clip… (id: …)" until it arrives.
-- 🌐 **No blind-peer-key by design**: the share link doesn't embed the blind-peer-key — it's teacher-side infrastructure and shouldn't travel in every link. Clara gets direct-P2P sync only. If you want to give a visitor persistent offline tolerance, share the blind-peer-key separately and have them add `--blind-peer-key <key>` to the launch command.
-- 🔁 **After you change code**, re-run `pear stage <pear-link>` before clara launches — Pear runtime downloads the **staged** version of the worker / renderer, not your local files.
+---
 
 ## 🆘 Something not working?
 
 Quick checks:
 
-- Did you copy the **current** blind-peer-key into alice's and bob's commands?
-- Did you copy alice's **current** `Invite:` line into bob's command?
-- Tried restarting the blind peer, then re-pairing alice + bob with the new key? (No `--reset` needed.)
+- Did you paste the **current** blind peer key? It changes each time you restart the relay.
+- Did you paste User 1's **account invite** into User 2's setup form?
+- Is User 1 online when User 2 connects for the first time?
 
-If you're still stuck, the full troubleshoot list and recovery recipe live in [`README-technical-background.md`](README-technical-background.md). 📚
+If you're still stuck, the full troubleshoot list lives in [`README-technical-background.md`](README-technical-background.md). 📚

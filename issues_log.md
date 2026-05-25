@@ -57,7 +57,19 @@ Tracking issues discovered during the pear-electron → pear-runtime migration a
 
 ## Open
 
-### 10. OTA updates not pulling on MacBook 2
+### 10. Worker auto-initialized without config (CLI flags gone after migration)
+- **Status:** Resolved 2026-05-25
+- **Symptoms:** App launched but blind peering never worked, invite couldn't be passed, name was auto-generated as `User <timestamp>`
+- **Cause:** Old `pear run` passed `--name`, `--blind-peer-key`, `--invite` as CLI flags. After migrating to pear-runtime (Electron), `pear.run('workers/main.js', [pear.storage])` only passes the storage path. Worker auto-initialized with empty flags `{}`.
+- **Fix:** Added `configure` HRPC method (schema + spec regeneration). Worker defers initialization until UI sends configure RPC with name, blindPeerKey, and optional invite. Keys tab now shows a setup form before connecting. Other tabs disabled until configured.
+- **Related:** Also fixed `setBlindPeerKey` handler which incorrectly used `swarm.joinPeer()` instead of configuring `BlindPeering({ mirrors })` at construction time.
+
+### 11. Deprecated console-message args in Electron 33+
+- **Status:** Resolved 2026-05-25
+- **Symptoms:** `(electron) 'console-message' arguments are deprecated` warning on every launch
+- **Fix:** Changed from positional args `(_e, level, message, line, sourceId)` to Event object `(e)` with `e.level`, `e.message`, `e.sourceId`, `e.line`
+
+### 12. OTA updates not pulling on MacBook 2
 - **Status:** Investigating
 - **Symptoms:** Seed shows "2 peers" but "upload 0B". MacBook 2 quits and relaunches but stays on old version.
 - **Possible causes:**
@@ -67,18 +79,28 @@ Tracking issues discovered during the pear-electron → pear-runtime migration a
 - **Workaround:** Manual reinstall via DMG/zip for each new version
 - **Next steps:** Test on same WiFi network; check if `pear-runtime` needs explicit `updates: true`; investigate Hyperswarm relay/holepunching for firewalled peers
 
-### 11. Two-MacBook chat sync not working
-- **Status:** Investigating
-- **Symptoms:** Both MacBooks run v0.0.4 with chat working locally. Blind peer key entered on both, invite pasted from MacBook 1 to MacBook 2, but no rooms or messages sync.
-- **Possible causes:**
-  - Same firewall/NAT issue as OTA — peers discover each other on DHT but can't transfer data
-  - BlindPairing may need the blind peer relay configured differently (via `mirrors` in BlindPeering constructor rather than `swarm.joinPeer`)
-  - The account-level invite may not be the right invite for `joinRoom()` — room-level invites might be needed
-- **Workaround:** None yet
-- **Next steps:** Test both MacBooks on same WiFi; investigate whether `swarm.joinPeer()` vs BlindPeering mirrors makes a difference; check chat-room.js pairing logic; add logging to `swarm.on('connection')` to confirm peers actually connect
+### 13. Packaged app hangs on "Connecting..." on MacBook 2
+- **Status:** Open — likely network issue, not app bug
+- **Date:** 2026-05-25
+- **Symptoms:** Bundled `.app` (v0.0.5) on MacBook 2 shows Keys tab setup form, user enters name + blind peer key (with or without invite), clicks Connect — UI stays on "Connecting..." forever. Same app works instantly with two `--profile` instances on MacBook 1.
+- **What we found:**
+  - No `worker.log` written (bare-fs `writeFileSync` fails silently in packaged app — separate minor issue)
+  - RocksDB corestore LOG shows 479 writes / 2497 keys in first 600s, then zero writes — worker is alive but stalled mid-init
+  - Worker hangs at `BlindPeering.addAutobase()` or `ChatAccount.ready()` — both need Hyperswarm connectivity to the blind peer relay
+  - `ping` from MacBook 2 → MacBook 1 shows "No route to host" for first 4 packets, then connects with 5-90ms jitter — WiFi is unreliable
+  - MacBook 2 also has npm issues running `npx blind-peer` (space handling in terminal) — untested whether a local blind peer would fix it
+- **Root cause:** Flaky WiFi between the two MacBooks. Hyperswarm DHT uses UDP, which is less forgiving than TCP on unreliable connections. Packets dropped during DHT bootstrap cause peer discovery and blind peering handshake to stall indefinitely.
+- **Why it works on MacBook 1:** Both `--profile` instances use localhost — no WiFi involved. The blind peer is local, DHT discovery is instant.
+- **Suggestions to fix/verify:**
+  1. **Test on a stable network** — phone hotspot, ethernet, or sit closer to the router. If it connects, the app is confirmed working and this is purely a WiFi issue.
+  2. **Run a blind peer locally on MacBook 2** — `npx --yes blind-peer -s /tmp/pearschool-mini-blind-local` (make sure there's a space before `-s`). Connect with the local key. If this works, cross-machine blind peering needs a more reliable network.
+  3. **Add a connection timeout + retry** — the app currently hangs forever if init stalls. Add a timeout to `BlindPeering.addAutobase()` and the pairing promise, with a "Retry" button in the UI.
+  4. **Add init progress feedback** — show which step is hanging (corestore ready → account ready → blind peering → rooms). Currently the UI just says "Connecting..." with no visibility into where it's stuck.
+  5. **Investigate Hyperswarm relay** — for networks where direct UDP doesn't work, Hyperswarm supports relay connections via `@hyperswarm/relay`. This might be needed for real-world deployment on restrictive WiFi networks.
+  6. **Fix worker.log in packaged app** — bare-fs `writeFileSync` silently fails in the packaged app. The log path should be valid (`pear/app-storage/worker.log`) since the corestore writes to the same parent directory. Investigate bare-fs path handling in packaged Electron context.
 
-### 12. App bundle size ~2.5GB
+### 14. App bundle size ~5GB
 - **Status:** Known limitation
 - **Cause:** Bare runtime native binaries are large: `bare-ffmpeg` (399MB), `bare-sidecar` (357MB), `react-native-bare-kit` (311MB), `rocksdb-native` (175MB)
-- **Impact:** Slow AirDrop/transfer, large disk footprint
+- **Impact:** Slow AirDrop/transfer, large disk footprint, Keet transfer corrupts the file
 - **Possible mitigations:** Strip unused platform binaries from native deps; investigate if `bare-ffmpeg` and `react-native-bare-kit` can be excluded for non-camera/non-mobile builds
