@@ -45,8 +45,8 @@ async function createWindow () {
   // Dev only: auto-open DevTools and forward renderer console / crashes to forge stdout
   if (!app.isPackaged) {
     win.webContents.openDevTools({ mode: 'detach' })
-    win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
-      console.log(`[renderer:${level}] ${sourceId}:${line} ${message}`)
+    win.webContents.on('console-message', (e) => {
+      console.log(`[renderer:${e.level}] ${e.sourceId}:${e.line} ${e.message}`)
     })
     win.webContents.on('render-process-gone', (_e, details) => {
       console.error('[renderer crashed]', details)
