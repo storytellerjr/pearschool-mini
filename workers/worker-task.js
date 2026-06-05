@@ -1,3 +1,4 @@
+import b4a from 'b4a'
 import BlindPeering from 'blind-peering'
 import Corestore from 'corestore'
 import debounce from 'debounceify'
@@ -107,6 +108,9 @@ export default class WorkerTask extends ReadyResource {
     })
     this.rpc.onAddVideo(async (data) => {
       await this.account.addVideo(data, { name: this.name, at: Date.now() })
+    })
+    this.rpc.onSetBlindPeerKey(async (key) => {
+      this.swarm.joinPeer(idEnc.decode(key))
     })
 
     await this.debounceRooms()

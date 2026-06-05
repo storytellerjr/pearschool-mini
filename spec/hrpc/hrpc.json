@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "schema": [
     {
       "id": 0,
@@ -144,6 +144,24 @@
         "send": true
       },
       "version": 6
+    },
+    {
+      "id": 16,
+      "name": "@pearschool-mini/set-blind-peer-key",
+      "request": {
+        "name": "string",
+        "send": true
+      },
+      "version": 7
+    },
+    {
+      "id": 17,
+      "name": "@pearschool-mini/configure",
+      "request": {
+        "name": "@pearschool-mini/configure",
+        "send": true
+      },
+      "version": 7
     }
   ]
 }

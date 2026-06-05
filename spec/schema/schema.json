@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "schema": [
     {
       "name": "writer",
@@ -380,6 +380,30 @@
       "namespace": "pearschool-mini",
       "array": true,
       "type": "@pearschool-mini/video"
+    },
+    {
+      "name": "configure",
+      "namespace": "pearschool-mini",
+      "compact": false,
+      "flagsPosition": 1,
+      "fields": [
+        {
+          "name": "name",
+          "required": true,
+          "type": "string",
+          "version": 7
+        },
+        {
+          "name": "invite",
+          "type": "string",
+          "version": 7
+        },
+        {
+          "name": "blindPeerKey",
+          "type": "string",
+          "version": 7
+        }
+      ]
     }
   ]
 }

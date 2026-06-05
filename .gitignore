@@ -19,6 +19,9 @@ node_modules/
 build/
 output.css
 
+# Electron Forge make output (large .app / .dmg artifacts)
+out/
+
 # Local runtime corestore left in the repo by `npx blind-peer -s blind-peer`
 # (contains IDENTITY — never commit). Always run blind-peer with -s /tmp/...
 blind-peer/

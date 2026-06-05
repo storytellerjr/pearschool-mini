@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import Runtime from 'pear-electron'
 
 import useWorker from '../lib/use-worker'
 
@@ -91,7 +90,7 @@ function FilesPanel ({ drives, addFile }) {
 
   const onAddFiles = (files) => {
     for (const file of files) {
-      const filePath = Runtime.media.getPathForFile(file)
+      const filePath = window.pear.getPathForFile(file)
       addFile({ name: file.name, uri: filePath })
     }
   }
@@ -399,7 +398,7 @@ function FreeClipsPanel ({ videos, addVideo, accountInvite, initialPlayerId }) {
 
   const onAddFiles = (files) => {
     for (const file of files) {
-      const filePath = Runtime.media.getPathForFile(file)
+      const filePath = window.pear.getPathForFile(file)
       addVideo(filePath)
     }
   }
@@ -539,10 +538,131 @@ function FreeClipsPanel ({ videos, addVideo, accountInvite, initialPlayerId }) {
   )
 }
 
+function KeysPanel ({ accountInvite, configure }) {
+  const [name, setName] = useState('')
+  const [blindKey, setBlindKey] = useState('')
+  const [invite, setInvite] = useState('')
+  const [connecting, setConnecting] = useState(false)
+
+  const connected = !!accountInvite
+
+  const onConnect = () => {
+    if (!name.trim() || !blindKey.trim()) return
+    setConnecting(true)
+    configure({
+      name: name.trim(),
+      blindPeerKey: blindKey.trim(),
+      invite: invite.trim() || ''
+    })
+  }
+
+  const onCopyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(accountInvite)
+    } catch {
+      const ta = document.createElement('textarea')
+      ta.value = accountInvite
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+  }
+
+  if (!connected) {
+    return (
+      <div className='bg-white p-4 rounded max-w-lg mx-auto'>
+        <h2 className='text-lg font-bold mb-1'>Setup</h2>
+        <p className='text-sm text-gray-500 mb-4'>
+          Start a blind peer in a terminal first, then enter your details below.
+        </p>
+
+        <div className='mb-4'>
+          <label className='font-bold text-sm mb-1 block'>Your name</label>
+          <input
+            type='text'
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder='e.g. alice'
+            className='w-full p-2 border border-gray-300 rounded'
+          />
+        </div>
+
+        <div className='mb-4'>
+          <label className='font-bold text-sm mb-1 block'>Blind peer listening key</label>
+          <p className='text-xs text-gray-500 mb-1'>Paste the key from your running blind peer.</p>
+          <input
+            type='text'
+            value={blindKey}
+            onChange={e => setBlindKey(e.target.value)}
+            placeholder='Paste blind peer key here...'
+            className='w-full p-2 border border-gray-300 rounded font-mono text-sm'
+          />
+        </div>
+
+        <div className='mb-6'>
+          <label className='font-bold text-sm mb-1 block'>Account invite (optional)</label>
+          <p className='text-xs text-gray-500 mb-1'>
+            Leave empty to create a new account. Paste another user's invite to join their account.
+          </p>
+          <input
+            type='text'
+            value={invite}
+            onChange={e => setInvite(e.target.value)}
+            placeholder='Paste account invite to join...'
+            className='w-full p-2 border border-gray-300 rounded font-mono text-sm'
+          />
+        </div>
+
+        <button
+          onClick={onConnect}
+          disabled={!name.trim() || !blindKey.trim() || connecting}
+          className='w-full bg-slate-700 text-white px-4 py-3 rounded font-bold disabled:opacity-50'
+        >
+          {connecting ? 'Connecting...' : 'Connect'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className='bg-white p-4 rounded'>
+      <h2 className='text-lg font-bold mb-4'>Keys</h2>
+
+      <div className='mb-6'>
+        <h3 className='font-bold mb-1'>Your Account Invite</h3>
+        <p className='text-sm text-gray-500 mb-2'>Share this with others so they can join your account.</p>
+        <div className='flex gap-2'>
+          <input
+            type='text'
+            value={accountInvite}
+            readOnly
+            className='flex-1 p-2 border border-gray-300 rounded bg-gray-50 text-sm font-mono'
+          />
+          <button
+            onClick={onCopyInvite}
+            className='bg-slate-700 text-white px-4 py-2 rounded'
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <div className='text-sm text-green-600'>Connected</div>
+    </div>
+  )
+}
+
 function App () {
-  const { rooms, messages, drives, tasks, courses, videos, accountInvite, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo } = useWorker()
-  const [tab, setTab] = useState('chat')
+  const { rooms, messages, drives, tasks, courses, videos, accountInvite, addMessage, addFile, addTask, setTaskStatus, deleteTask, addCourse, setCourseStatus, deleteCourse, addVideo, configure } = useWorker()
+  const [tab, setTab] = useState('keys')
   const [initialPlayerId, setInitialPlayerId] = useState()
+
+  const connected = !!accountInvite
+
+  useEffect(() => {
+    if (connected && tab === 'keys') setTab('chat')
+  }, [connected])
 
   useEffect(() => {
     const hash = window.location.hash
@@ -558,7 +678,8 @@ function App () {
   const tabBtn = (id, label) => (
     <button
       onClick={() => setTab(id)}
-      className={`px-4 py-2 rounded-t ${tab === id ? 'bg-white text-slate-800 font-bold' : 'bg-slate-400 text-white'}`}
+      disabled={!connected && id !== 'keys'}
+      className={`px-4 py-2 rounded-t ${tab === id ? 'bg-white text-slate-800 font-bold' : 'bg-slate-400 text-white'} ${!connected && id !== 'keys' ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {label}
     </button>
@@ -566,18 +687,23 @@ function App () {
 
   return (
     <div className='bg-slate-700 min-h-screen p-4'>
-      <div className='flex mb-3 gap-1'>
+      <div className='flex mb-3 gap-1 items-center'>
         {tabBtn('chat', 'Chat')}
         {tabBtn('files', 'Files')}
         {tabBtn('tasks', 'Tasks')}
         {tabBtn('courses', 'Courses')}
         {tabBtn('clips', 'Free clips')}
+        {tabBtn('keys', 'Keys')}
+        <div className='ml-auto text-xs text-slate-400 font-mono'>
+          v{window.pear?.version || '?'}
+        </div>
       </div>
       {tab === 'chat' && <ChatPanel rooms={rooms} messages={messages} addMessage={addMessage} />}
       {tab === 'files' && <FilesPanel drives={drives} addFile={addFile} />}
       {tab === 'tasks' && <TasksPanel tasks={tasks} addTask={addTask} setTaskStatus={setTaskStatus} deleteTask={deleteTask} />}
       {tab === 'courses' && <CoursesPanel courses={courses} addCourse={addCourse} setCourseStatus={setCourseStatus} deleteCourse={deleteCourse} />}
       {tab === 'clips' && <FreeClipsPanel videos={videos} addVideo={addVideo} accountInvite={accountInvite} initialPlayerId={initialPlayerId} />}
+      {tab === 'keys' && <KeysPanel accountInvite={accountInvite} configure={configure} />}
     </div>
   )
 }
